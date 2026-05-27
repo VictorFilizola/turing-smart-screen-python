@@ -1,0 +1,11 @@
+# 2.8" round screen
+TURING_CONFIG=./config-2.8round.yaml python configure.py
+TURING_CONFIG=./config-2.8round.yaml python main.py
+
+# 9.2" screen
+TURING_CONFIG=./config-9.2.yaml python configure.py
+TURING_CONFIG=./config-9.2.yaml python main.py
+
+# Custom LCD themes
+fili-2.8-round
+fili-9.2-square

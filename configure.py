@@ -77,7 +77,7 @@ SIZE_8_INCH = "8\""
 SIZE_8_8_INCH = "8.8\""
 SIZE_8_8_INCH_NEWREV = "8.8\" / 9.2\" (V1.X new HW rev.)"
 SIZE_12_3_INCH = "12.3\""
-SIZE_2_8_INCH_NEWREV = "2.8\" round (V1.X new HW rev.)"
+SIZE_2_8_ROUND_USB = "2.8\" round (V1.X new HW rev.)"
 
 # List of sizes that can be selected
 size_list = (
@@ -167,6 +167,7 @@ weather_lang_map = {"sq": "Albanian", "af": "Afrikaans", "ar": "Arabic", "az": "
                     "ua": "Ukrainian", "vi": "Vietnamese", "zu": "Zulu"}
 
 MAIN_DIRECTORY = Path(__file__).resolve().parent
+CONFIG_FILE = Path(os.environ.get("TURING_CONFIG", MAIN_DIRECTORY / "config.yaml"))
 THEMES_DIR = MAIN_DIRECTORY / "res/themes"
 VERSION_FILE = MAIN_DIRECTORY / "version.txt"
 
@@ -420,7 +421,7 @@ class TuringConfigWindow:
             self.theme_author.place(x=10, y=self.theme_preview_img.height() + 15)
 
     def load_config_values(self):
-        with open(MAIN_DIRECTORY / "config.yaml", "rt", encoding='utf8') as stream:
+        with open(CONFIG_FILE, "rt", encoding='utf8') as stream:
             self.config, ind, bsi = ruamel.yaml.util.load_yaml_guess_indent(stream)
 
         # Check if theme is valid
@@ -537,7 +538,7 @@ class TuringConfigWindow:
         self.config['display']['DISPLAY_REVERSE'] = [k for k, v in reverse_map.items() if v == self.orient_cb.get()][0]
         self.config['display']['BRIGHTNESS'] = int(self.brightness_slider.get())
 
-        with open(MAIN_DIRECTORY / "config.yaml", "w", encoding='utf-8') as file:
+        with open(CONFIG_FILE, "w", encoding='utf-8') as file:
             ruamel.yaml.YAML().dump(self.config, file)
 
     def save_additional_config(self, ping: str, api_key: str, lat: str, long: str, unit: str, lang: str):
@@ -548,7 +549,7 @@ class TuringConfigWindow:
         self.config['config']['WEATHER_UNITS'] = unit
         self.config['config']['WEATHER_LANGUAGE'] = lang
 
-        with open(MAIN_DIRECTORY / "config.yaml", "w", encoding='utf-8') as file:
+        with open(CONFIG_FILE, "w", encoding='utf-8') as file:
             ruamel.yaml.YAML().dump(self.config, file)
 
     def on_theme_change(self, e=None):

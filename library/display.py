@@ -102,7 +102,7 @@ class Display:
             self.lcd = LcdCommRevD(com_port=config.CONFIG_DATA['config']['COM_PORT'],
                                    update_queue=config.update_queue)
         elif config.CONFIG_DATA["display"]["REVISION"] == "TUR_USB":
-            self.lcd = LcdCommTuringUSB()
+            self.lcd = LcdCommTuringUSB(com_port=config.CONFIG_DATA['config']['COM_PORT'])
         elif config.CONFIG_DATA["display"]["REVISION"] == "WEACT_A":
             self.lcd = LcdCommWeActA(com_port=config.CONFIG_DATA['config']['COM_PORT'],
                                    update_queue=config.update_queue)

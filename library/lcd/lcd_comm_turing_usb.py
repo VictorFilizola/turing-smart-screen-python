@@ -459,10 +459,15 @@ def encrypt_command_packet(data: bytearray) -> bytearray:
     return final_packet
 
 
-def find_usb_device():
+def find_usb_device(target_pid: Optional[int] = None):
     dev = None
     dev_pid = None
-    for pid in PRODUCT_ID.keys():
+    if target_pid is not None and target_pid not in PRODUCT_ID:
+        from library.log import logger
+        logger.warning(f"Unknown USB PID {hex(target_pid)}, falling back to auto-detection")
+        target_pid = None
+    pids_to_check = [target_pid] if target_pid is not None else PRODUCT_ID.keys()
+    for pid in pids_to_check:
         try:
             dev = usb.core.find(idVendor=VENDOR_ID, idProduct=pid)
         except usb.core.NoBackendError as e:
@@ -936,7 +941,13 @@ class LcdCommTuringUSB(LcdComm):
     def __init__(self, com_port: str = "AUTO", display_width: int = 480, display_height: int = 1920,
                  update_queue: Optional[queue.Queue] = None):
         super().__init__(com_port, display_width, display_height, update_queue)
-        self.dev, self.dev_pid = find_usb_device()
+        target_pid = None
+        if com_port.upper() != "AUTO":
+            try:
+                target_pid = int(com_port, 16)
+            except ValueError:
+                pass
+        self.dev, self.dev_pid = find_usb_device(target_pid)
         self.display_width, self.display_height = PRODUCT_ID[self.dev_pid]
         # Store the current screen state as an image that will be continuously updated and sent
         self.current_state = Image.new("RGBA", (self.get_width(), self.get_height()), (0, 0, 0, 0))
