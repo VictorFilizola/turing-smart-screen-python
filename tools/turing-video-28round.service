@@ -1,0 +1,11 @@
+[Unit]
+Description=Turing 2.8" round video background
+
+[Service]
+WorkingDirectory=/home/vito/Documents/github/personal/turing-smart-screen-python
+ExecStart=/home/vito/Documents/github/personal/turing-smart-screen-python/.venv/bin/python video-mode.py turin-smart-screen-themes/redskull-2.8inch.mp4 --pid 0x0028 --loop
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=default.target

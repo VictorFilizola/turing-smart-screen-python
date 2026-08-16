@@ -685,13 +685,13 @@ def extract_h264_from_mp4(mp4_path: str):
     return output_path
 
 
-def send_video(dev, video_path, loop=False):
+def send_video(dev, video_path, loop=False, brightness: int = 100):
     output_path = extract_h264_from_mp4(video_path)
 
     write_to_device(dev, encrypt_command_packet(build_command_packet_header(111)))
     write_to_device(dev, encrypt_command_packet(build_command_packet_header(112)))
     write_to_device(dev, encrypt_command_packet(build_command_packet_header(13)))
-    send_brightness_command(dev, 32)  # 14
+    send_brightness_command(dev, int(brightness / 100 * 102))  # 14
     write_to_device(dev, encrypt_command_packet(build_command_packet_header(41)))
     clear_image(dev)  # 102
     send_frame_rate_command(dev, 25)  # 15

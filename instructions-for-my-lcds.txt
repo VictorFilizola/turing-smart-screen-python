@@ -1,11 +1,93 @@
-# 2.8" round screen
-TURING_CONFIG=./config-2.8round.yaml python configure.py
-TURING_CONFIG=./config-2.8round.yaml python main.py
+# Video background on Turing USB screens — what was changed and how to keep it
 
-# 9.2" screen
-TURING_CONFIG=./config-9.2.yaml python configure.py
-TURING_CONFIG=./config-9.2.yaml python main.py
+This file documents the work done to play looping videos on the two Turing USB
+screens, plus how to make it survive a reboot.
 
-# Custom LCD themes
-fili-2.8-round
-fili-9.2-square
+## Screens
+
+- 2.8" round — USB PID `0x0028` — 480x480
+- 9.2" — USB PID `0x0092` — 480x1920 (mounted landscape)
+
+Both detect over raw USB (pyusb), not a serial COM port. That is why the
+"TUR_USB" path (DES-encrypted command packets + H.264 stream) is used, not the
+old serial "rev C" path.
+
+## Files added (untracked)
+
+- `video-mode.py` — CLI that plays an MP4 on a Turing USB screen.
+  ```
+  .venv/bin/python video-mode.py <file>.mp4 --pid 0x0092 --loop
+  .venv/bin/python video-mode.py <file>.mp4 --pid 0x0028 --loop
+  ```
+  `--pid` selects screen (`0x0092` = 9.2", `0x0028` = 2.8" round). `AUTO` picks
+  the 2.8" round first, so always pass `--pid` when both are plugged in.
+  `--loop` loops until interrupted. `--brightness N` (0-100, default 100 = max).
+
+- `turin-smart-screen-themes/make-videos.sh` — rebuilds the screen MP4s from the
+  source GIFs with ffmpeg. Run from repo root:
+  ```
+  bash turin-smart-screen-themes/make-videos.sh
+  ```
+  Recipes encoded in it:
+  - 9" skeleton: crop 1/3 off top + 1/5 off bottom, stretch to fill 1920x480,
+    rotate `transpose=1` for the landscape mount, 25 fps.
+  - 2.8" redskull: scale to 480x480, flip 180 (hflip+vflip), 25 fps.
+
+- `turin-smart-screen-themes/skeleton-skeletons-ezgif-9inch.mp4` — the 9" output
+  currently on screen (294 frames, ~9.8s loop).
+
+- `turin-smart-screen-themes/redskull-2.8inch.mp4` — the 2.8" output currently
+  on screen.
+
+- `turin-smart-screen-themes/skeleton-skeletons-ezgif-9inch.gif` — the 9" video
+  saved as a GIF (1920x480, 294 frames). ~73 MB.
+
+- `turin-smart-screen-themes/redskull-2.8inch.gif` — the 2.8" video saved as a
+  GIF (480x480, 133 frames).
+
+## Files modified (tracked)
+
+`library/lcd/lcd_comm_turing_usb.py` — `send_video()` now takes a `brightness`
+param instead of a hardcoded brightness value:
+
+```
+-def send_video(dev, video_path, loop=False):
++def send_video(dev, video_path, loop=False, brightness: int = 100):
+ ...
+-    send_brightness_command(dev, 32)  # 14
++    send_brightness_command(dev, int(brightness / 100 * 102))  # 14
+```
+
+`video-mode.py` passes `--brightness` through and defaults it to 100 (max).
+
+## Boot persistence
+
+The video loops do not start by themselves. They are wired as systemd user
+services. The unit files are committed in the repo:
+
+- `tools/turing-video-9inch.service` — 9.2" skeleton (PID `0x0092`)
+- `tools/turing-video-28round.service` — 2.8" round redskull (PID `0x0028`)
+
+Both `ExecStart` points at `video-mode.py <mp4> --pid <pid> --loop` run through
+the repo's `.venv/bin/python`, with `Restart=always` and `RestartSec=5`.
+
+To install on a machine (adjust the repo path + username inside the `.service`
+files first, then):
+
+```
+mkdir -p ~/.config/systemd/user
+cp tools/turing-video-9inch.service  ~/.config/systemd/user/
+cp tools/turing-video-28round.service ~/.config/systemd/user/
+systemctl --user daemon-reload
+systemctl --user enable --now turing-video-9inch.service turing-video-28round.service
+sudo loginctl enable-linger vito     # start at boot, before login
+```
+
+The `enable-linger` step is the one sudo required; without it they only start
+after login.
+
+## GIF sources
+
+- `turin-smart-screen-themes/skeleton-skeletons-ezgif.com-speed.gif` — 9" source
+  (640x480, 294 frames, ping-pong loop).
+- `turin-smart-screen-themes/redskull.gif` — 2.8" source (256x256, 133 frames).

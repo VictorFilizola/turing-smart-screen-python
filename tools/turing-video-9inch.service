@@ -1,0 +1,11 @@
+[Unit]
+Description=Turing 9.2" video background
+
+[Service]
+WorkingDirectory=/home/vito/Documents/github/personal/turing-smart-screen-python
+ExecStart=/home/vito/Documents/github/personal/turing-smart-screen-python/.venv/bin/python video-mode.py turin-smart-screen-themes/skeleton-skeletons-ezgif-9inch.mp4 --pid 0x0092 --loop
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=default.target
